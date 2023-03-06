@@ -14,7 +14,7 @@ chmod 755 fsnotifier
 SHOULD_VALIDATE_CENTOS_SUPPORT="1"
 
 OS_NAME=$(awk -F= '/^NAME/{print $2}' /etc/os-release)
-if [ "$OS_NAME" = "Ubuntu" ]; then
+if [ "$OS_NAME" = '"Ubuntu"' ]; then
   SHOULD_VALIDATE_CENTOS_SUPPORT="0"
 fi
 
