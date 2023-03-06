@@ -11,14 +11,23 @@ rm -f fsnotifier
 ${CC:-clang} -O2 -Wall -Wextra -Wpedantic -D "VERSION=\"$VER\"" -std=c11 main.c inotify.c util.c -o fsnotifier
 chmod 755 fsnotifier
 
-# ensuring supported builds are compatible with RHEL/CentOS 7
-MAX_GLIBC_VERSION="2.17"
-ARCH=$(uname -m)
-if [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "amd64" ] || [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-  glibc_version="$(objdump -x fsnotifier | grep -o "GLIBC_.*" | sort | uniq | cut -d _ -f 2 | sort -V | tail -n 1)"
-  newest=$(printf "%s\n%s\n" "$MAX_GLIBC_VERSION" "$glibc_version" | sort -V | tail -n 1)
-  if [ "$newest" != "$MAX_GLIBC_VERSION" ]; then
-    echo "ERROR: fsnotifier uses glibc version $glibc_version which is newer than $MAX_GLIBC_VERSION"
-    exit 1
+SHOULD_VALIDATE_CENTOS_SUPPORT="1"
+
+OS_NAME=$(awk -F= '/^NAME/{print $2}' /etc/os-release)
+if [ "$OS_NAME" = "Ubuntu" ]; then
+  SHOULD_VALIDATE_CENTOS_SUPPORT="0"
+fi
+
+if [ "$SHOULD_VALIDATE_CENTOS_SUPPORT" = "1" ]; then
+  # ensuring supported builds are compatible with RHEL/CentOS 7
+  MAX_GLIBC_VERSION="2.17"
+  ARCH=$(uname -m)
+  if [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "amd64" ] || [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+    glibc_version="$(objdump -x fsnotifier | grep -o "GLIBC_.*" | sort | uniq | cut -d _ -f 2 | sort -V | tail -n 1)"
+    newest=$(printf "%s\n%s\n" "$MAX_GLIBC_VERSION" "$glibc_version" | sort -V | tail -n 1)
+    if [ "$newest" != "$MAX_GLIBC_VERSION" ]; then
+      echo "ERROR: fsnotifier uses glibc version $glibc_version which is newer than $MAX_GLIBC_VERSION"
+      exit 1
+    fi
   fi
 fi
